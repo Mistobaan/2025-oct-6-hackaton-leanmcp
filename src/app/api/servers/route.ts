@@ -7,6 +7,7 @@ interface Server {
   repository: { url: string; source: string };
   version: string;
   remotes: { type: string; url: string }[];
+  icon?: string;
 }
 
 interface ServerMeta {
@@ -25,77 +26,89 @@ interface ServerRecord {
   _meta: ServerMeta;
 }
 
-interface RequestBody {
-  prompt: string;
-  topK?: number;
-}
+// interface RequestBody {
+//   prompt: string;
+//   topK?: number;
+// }
 
 const SERVERS: ServerRecord[] = [
   {
-    id: "ai.alpic.test/test-mcp-server@0.0.1",
-    score: 0.91,
+    id: "com.slack/mcp-slack@0.1.0",
+    score: 0.95,
     server: {
       $schema: "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
-      name: "ai.alpic.test/test-mcp-server",
-      description: "Alpic Test MCP Server - great server!",
-      repository: { url: "", source: "" },
-      version: "0.0.1",
-      remotes: [{ type: "streamable-http", url: "https://test.alpic.ai/" }],
-    },
-    _meta: {
-      "io.modelcontextprotocol.registry/official": {
-        status: "active",
-        publishedAt: "2025-09-10T13:57:43.256739Z",
-        updatedAt: "2025-09-10T13:57:43.256739Z",
-        isLatest: true,
-      },
-    },
-  },
-  {
-    id: "ai.explorium/mcp-explorium@1.0.0",
-    score: 0.88,
-    server: {
-      $schema: "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
-      name: "ai.explorium/mcp-explorium",
+      name: "Slack Workspace MCP",
       description:
-        "Access live company and contact data from Explorium's AgentSource B2B platform.",
-      repository: { url: "", source: "" },
-      version: "1.0.0",
-      remotes: [
-        { type: "sse", url: "https://mcp-github-registry.explorium.ai/sse" },
-      ],
-    },
-    _meta: {
-      "io.modelcontextprotocol.registry/official": {
-        status: "active",
-        publishedAt: "2025-09-16T21:06:15.352229Z",
-        updatedAt: "2025-09-16T21:06:15.352229Z",
-        isLatest: true,
-      },
-    },
-  },
-  {
-    id: "ai.klavis/strata@1.0.0",
-    score: 0.86,
-    server: {
-      $schema: "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
-      name: "ai.klavis/strata",
-      description:
-        "MCP server for progressive tool usage at any scale (see https://klavis.ai)",
+        "Interact with Slack channels, search conversations, and post updates from a single MCP interface.",
       repository: {
-        url: "https://github.com/Klavis-AI/klavis",
+        url: "https://github.com/example/slack-mcp",
         source: "github",
       },
-      version: "1.0.0",
+      version: "0.1.0",
       remotes: [
-        { type: "streamable-http", url: "https://strata.klavis.ai/mcp/" },
+        { type: "streamable-http", url: "https://mcp.fake-slack.com/mcp" },
       ],
+      icon: "/slack.png",
+    },
+    _meta: {
+      "io.modelcontextprotocol.registry/official": {
+        status: "experimental",
+        publishedAt: "2025-10-01T09:30:00.000Z",
+        updatedAt: "2025-10-01T09:30:00.000Z",
+        isLatest: true,
+      },
+    },
+  },
+  {
+    id: "com.google/drive-mcp@0.2.0",
+    score: 0.92,
+    server: {
+      $schema: "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+      name: "Google Drive MCP",
+      description:
+        "Browse, search, and manage Google Drive documents with structured MCP tools.",
+      repository: {
+        url: "https://github.com/example/google-drive-mcp",
+        source: "github",
+      },
+      version: "0.2.0",
+      remotes: [
+        { type: "streamable-http", url: "https://mcp.fake-gdrive.com/mcp" },
+      ],
+      icon: "/gdrive.png",
     },
     _meta: {
       "io.modelcontextprotocol.registry/official": {
         status: "active",
-        publishedAt: "2025-09-28T19:13:44.307076Z",
-        updatedAt: "2025-09-28T19:13:44.307076Z",
+        publishedAt: "2025-09-18T12:00:00.000Z",
+        updatedAt: "2025-10-03T08:45:00.000Z",
+        isLatest: true,
+      },
+    },
+  },
+  {
+    id: "com.atlassian/jira-mcp@0.5.1",
+    score: 0.9,
+    server: {
+      $schema: "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+      name: "Jira Project MCP",
+      description:
+        "Query Jira issues, transition workflows, and file updates straight from MCP prompts.",
+      repository: {
+        url: "https://github.com/example/jira-mcp",
+        source: "github",
+      },
+      version: "0.5.1",
+      remotes: [
+        { type: "streamable-http", url: "https://mcp.fake-jira.com/mcp" },
+      ],
+      icon: "/JIRA.png",
+    },
+    _meta: {
+      "io.modelcontextprotocol.registry/official": {
+        status: "beta",
+        publishedAt: "2025-08-22T16:15:00.000Z",
+        updatedAt: "2025-09-30T10:20:00.000Z",
         isLatest: true,
       },
     },
@@ -108,7 +121,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-
+    console.log(req)
     // const body: RequestBody = await req.json();
     // if (!body.prompt || typeof body.prompt !== "string") {
     //   return NextResponse.json(

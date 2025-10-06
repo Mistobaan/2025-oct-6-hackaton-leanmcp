@@ -1,15 +1,30 @@
 "use client";
 
-import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import {
+  DndContext,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+} from "@dnd-kit/core";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { McpPalette } from "@/components/mcp-palette";
 import { McpCanvas } from "@/components/mcp-canvas";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { useState, useEffect } from "react";
 import { type McpServer } from "@/lib/mcps";
+import Image from "next/image";
 
 export default function BlackboxPage() {
+  const router = useRouter();
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor)
@@ -34,6 +49,7 @@ export default function BlackboxPage() {
               repository?: { url: string; source: string };
               version?: string;
               remotes?: Array<{ type: string; url: string }>;
+              icon?: string;
             };
           }>;
         } = await res.json();
@@ -42,7 +58,7 @@ export default function BlackboxPage() {
           id: item.id,
           name: item.server.name,
           description: item.server.description,
-          iconUrl: undefined,
+          iconUrl: item.server.icon,
           remoteUrl: item.server.remotes && item.server.remotes.length > 0 ? item.server.remotes[0].url : undefined,
           repositoryUrl: item.server.repository?.url,
           config: {
@@ -75,6 +91,39 @@ export default function BlackboxPage() {
     }
   }
 
+  async function handleCreateClick() {
+    setIsCreating(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          prompt: "Create MCP session",
+          mcpServerIds: selected,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data?.url || typeof data.url !== "string") {
+        throw new Error("Response missing URL");
+      }
+
+      router.push(`/blackbox/created?url=${encodeURIComponent(data.url)}`);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to create MCP. Please try again.");
+    } finally {
+      setIsCreating(false);
+    }
+  }
+
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     setActiveServer(null);
@@ -102,23 +151,29 @@ export default function BlackboxPage() {
         <header className="border-b p-4 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/40">
           <div className="container mx-auto flex items-center justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">MCP Blackbox</h1>
+              <h1 className="text-2xl font-semibold tracking-tight">
+                MCP Blackbox
+              </h1>
               <p className="text-sm text-muted-foreground mt-1">
-                Drag MCP servers from the left into the blackbox to compose a single MCP.
+                Drag MCP servers from the left into the blackbox to compose a
+                single MCP.
               </p>
             </div>
             <Button
               className="bg-purple-600 text-white hover:bg-purple-600/90"
-              onClick={() => {
-                // Placeholder: future create MCP action
-                console.log("Create MCP clicked");
-              }}
+              disabled={isCreating}
+              onClick={handleCreateClick}
             >
               Create MCP
             </Button>
           </div>
         </header>
         <main className="container mx-auto p-4">
+          {error && (
+            <p className="mb-4 text-sm text-red-500" role="alert">
+              {error}
+            </p>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[calc(100vh-160px)]">
             <div className="md:col-span-1">
               <ScrollArea className="h-full pr-2">
@@ -136,7 +191,17 @@ export default function BlackboxPage() {
         {activeServer ? (
           <div className="border rounded-md p-3 bg-card shadow-lg opacity-90 rotate-3">
             <div className="flex items-start gap-3">
-              <div className="h-8 w-8 rounded-md bg-muted shrink-0" />
+              {activeServer.iconUrl ? (
+                <Image
+                  src={activeServer.iconUrl}
+                  alt={`${activeServer.name} icon`}
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 rounded-md border border-border bg-background object-contain p-1 shrink-0"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded-md bg-muted shrink-0" />
+              )}
               <div>
                 <div className="font-medium text-sm">{activeServer.name}</div>
                 <div className="text-xs text-muted-foreground">{activeServer.description}</div>
@@ -148,5 +213,3 @@ export default function BlackboxPage() {
     </DndContext>
   );
 }
-
-

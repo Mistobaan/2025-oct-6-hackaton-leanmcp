@@ -2,6 +2,7 @@
 
 import { useDroppable } from "@dnd-kit/core";
 import { useMemo, useEffect, useState } from "react";
+import Image from "next/image";
 import { type McpServer } from "@/lib/mcps";
 
 export type Selected = string[];
@@ -35,6 +36,7 @@ export function McpCanvas({
               repository?: { url: string; source: string };
               version?: string;
               remotes?: Array<{ type: string; url: string }>;
+              icon?: string;
             };
           }>;
         } = await res.json();
@@ -43,7 +45,7 @@ export function McpCanvas({
           id: item.id,
           name: item.server.name,
           description: item.server.description,
-          iconUrl: undefined,
+          iconUrl: item.server.icon,
           remoteUrl: item.server.remotes && item.server.remotes.length > 0 ? item.server.remotes[0].url : undefined,
           repositoryUrl: item.server.repository?.url,
           config: {
@@ -105,7 +107,17 @@ export function McpCanvas({
           <div className="space-y-2">
             {selectedServers.map((s) => (
               <div key={s.id} className="flex items-start gap-3 border rounded-md p-3 bg-background hover:bg-muted/50 transition-colors">
-                <div className="h-6 w-6 rounded bg-muted shrink-0" />
+                {s.iconUrl ? (
+                  <Image
+                    src={s.iconUrl}
+                    alt={`${s.name} icon`}
+                    width={24}
+                    height={24}
+                    className="h-6 w-6 rounded border border-border bg-background object-contain p-0.5 shrink-0"
+                  />
+                ) : (
+                  <div className="h-6 w-6 rounded bg-muted shrink-0" />
+                )}
                 <div className="flex-1">
                   <div className="text-sm font-medium">{s.name}</div>
                   <div className="text-xs text-muted-foreground">{s.description}</div>
