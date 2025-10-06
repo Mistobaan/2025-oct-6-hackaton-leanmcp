@@ -8,7 +8,7 @@ export default function Home() {
   const [prompt, setPrompt] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const examplePrompt =
-    "Design a chatbot interface that delegates tasks to three MCP servers: GitHub, Linear, and Slack. Outline the tool calls needed.";
+    "Please let me get all of the data from my PDF, Google Sheet, and Doc files for NovaAI, find the long-term profitability trends, create a graph, and draft an email with summarized business info and the graph, so I can send it to my boss.";
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
