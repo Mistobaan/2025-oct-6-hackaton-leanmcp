@@ -29,8 +29,15 @@ export default function BlackboxPage() {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor)
   );
+  const examplePrompt =
+    "Please let me get all of the data from my PDF, Google Sheet, and Doc files for NovaAI, find the long-term profitability trends, create a graph, and draft an email with summarized business info and the graph, so I can send it to my boss.";
 
-  const [selected, setSelected] = useLocalStorage<string[]>("selected-mcps", []);
+  const [prompt, setPrompt] = useState(examplePrompt);
+
+  const [selected, setSelected] = useLocalStorage<string[]>(
+    "selected-mcps",
+    []
+  );
   const [activeServer, setActiveServer] = useState<McpServer | null>(null);
   const [allServers, setAllServers] = useState<McpServer[]>([]);
 
@@ -59,14 +66,22 @@ export default function BlackboxPage() {
           name: item.server.name,
           description: item.server.description,
           iconUrl: item.server.icon,
-          remoteUrl: item.server.remotes && item.server.remotes.length > 0 ? item.server.remotes[0].url : undefined,
+          remoteUrl:
+            item.server.remotes && item.server.remotes.length > 0
+              ? item.server.remotes[0].url
+              : undefined,
           repositoryUrl: item.server.repository?.url,
           config: {
             server: {
-              $schema: item.server.$schema ?? "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+              $schema:
+                item.server.$schema ??
+                "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
               name: item.server.name,
               description: item.server.description,
-              remotes: (item.server.remotes ?? []).map((r) => ({ type: r.type, url: r.url })),
+              remotes: (item.server.remotes ?? []).map((r) => ({
+                type: r.type,
+                url: r.url,
+              })),
             },
           },
         }));
@@ -84,7 +99,7 @@ export default function BlackboxPage() {
     const data: any = (active as any).data?.current;
     if (data?.type === "palette" && typeof data.serverId === "string") {
       // Find the server data for the drag overlay
-      const server = allServers.find(s => s.id === data.serverId);
+      const server = allServers.find((s) => s.id === data.serverId);
       if (server) {
         setActiveServer(server);
       }
@@ -127,9 +142,9 @@ export default function BlackboxPage() {
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     setActiveServer(null);
-    
+
     if (!over || over.id !== "canvas") return;
-    
+
     const data: any = (active as any).data?.current;
     if (data?.type === "palette" && typeof data.serverId === "string") {
       if (!selected.includes(data.serverId)) {
@@ -138,9 +153,14 @@ export default function BlackboxPage() {
     }
   }
 
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    router.push("/blackbox");
+  }
+
   return (
-    <DndContext 
-      sensors={sensors} 
+    <DndContext
+      sensors={sensors}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
@@ -175,18 +195,55 @@ export default function BlackboxPage() {
             </p>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[calc(100vh-160px)]">
+            <div className="md:col-span-1 h-full">
+              <form onSubmit={onSubmit} className="mx-auto mt-10 max-w-2xl">
+                <div className="rounded-2xl border border-white/10 bg-black/40 p-3 md:p-4 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,.06),0_0_0_1px_rgba(255,255,255,.04)]">
+                  <div className="flex items-end gap-3">
+                    <div className="flex-1">
+                      <textarea
+                        value={prompt}
+                        onChange={(e) => setPrompt(e.target.value)}
+                        placeholder="Your wish is my command"
+                        className="w-full resize-none bg-transparent outline-none text-base md:text-lg leading-relaxed placeholder:text-muted-foreground/70 p-2 md:p-3 text-foreground"
+                        rows={3}
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="shrink-0 rounded-full px-4 py-2 text-sm font-medium bg-white text-black hover:opacity-90 transition shadow-[0_0_0_1px_rgba(255,255,255,.2)_inset]"
+                    >
+                      Submit
+                    </button>
+                  </div>
+                  <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/10">
+                        +
+                      </span>
+                      <span className="inline-flex h-7 items-center rounded-full border border-white/10 px-3 bg-white/5">
+                        Options
+                      </span>
+                    </div>
+                    <div className="opacity-80">Voice</div>
+                  </div>
+                </div>
+              </form>
+              <div className="p-5">
+                <McpCanvas selected={selected} setSelected={setSelected} />
+              </div>
+            </div>
             <div className="md:col-span-1">
               <ScrollArea className="h-full pr-2">
+                <div className="p-5">
+                  <p>Suggested list of MCP for your use case</p>
+                </div>
                 <McpPalette />
               </ScrollArea>
-            </div>
-            <div className="md:col-span-1 h-full">
-              <McpCanvas selected={selected} setSelected={setSelected} />
             </div>
           </div>
         </main>
       </div>
-      
+
       <DragOverlay>
         {activeServer ? (
           <div className="border rounded-md p-3 bg-card shadow-lg opacity-90 rotate-3">
@@ -204,7 +261,9 @@ export default function BlackboxPage() {
               )}
               <div>
                 <div className="font-medium text-sm">{activeServer.name}</div>
-                <div className="text-xs text-muted-foreground">{activeServer.description}</div>
+                <div className="text-xs text-muted-foreground">
+                  {activeServer.description}
+                </div>
               </div>
             </div>
           </div>
