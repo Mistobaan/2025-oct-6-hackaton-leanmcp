@@ -2,6 +2,7 @@
 
 import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 import { McpPalette } from "@/components/mcp-palette";
 import { McpCanvas } from "@/components/mcp-canvas";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -32,11 +33,22 @@ export default function BlackboxPage() {
         <div className="pointer-events-none absolute inset-0 -z-10 opacity-[0.35] [background-image:radial-gradient(transparent_1px,rgba(0,0,0,0.15)_1px)] [background-size:3px_3px]" />
         <div className="pointer-events-none absolute -z-10 left-1/2 top-6 h-[300px] w-[300px] -translate-x-1/2 rounded-full blur-3xl [background:conic-gradient(from_180deg_at_50%_50%,oklch(0.78_0.24_340)_0%,oklch(0.78_0.24_20)_30%,oklch(0.75_0.22_90)_60%,oklch(0.8_0.22_10)_90%,oklch(0.78_0.24_340)_100%)]" />
         <header className="border-b p-4 bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/40">
-          <div className="container mx-auto">
-            <h1 className="text-2xl font-semibold tracking-tight">MCP Blackbox</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Drag MCP servers from the left into the blackbox to compose a single MCP.
-            </p>
+          <div className="container mx-auto flex items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">MCP Blackbox</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Drag MCP servers from the left into the blackbox to compose a single MCP.
+              </p>
+            </div>
+            <Button
+              className="bg-purple-600 text-white hover:bg-purple-600/90"
+              onClick={() => {
+                // Placeholder: future create MCP action
+                console.log("Create MCP clicked");
+              }}
+            >
+              Create MCP
+            </Button>
           </div>
         </header>
         <main className="container mx-auto p-4">

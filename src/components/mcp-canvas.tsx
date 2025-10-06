@@ -1,8 +1,8 @@
 "use client";
 
-import { useDroppable, useDraggable, DragEndEvent } from "@dnd-kit/core";
+import { useDroppable } from "@dnd-kit/core";
 import { useMemo } from "react";
-import { MCP_SERVERS, type McpServer, composeCombinedMcp } from "@/lib/mcps";
+import { MCP_SERVERS, type McpServer } from "@/lib/mcps";
 
 export type Selected = string[];
 
@@ -20,8 +20,6 @@ export function McpCanvas({
   []);
 
   const selectedServers: McpServer[] = selected.map((id) => serversById[id]).filter(Boolean);
-
-  const combined = useMemo(() => composeCombinedMcp(selectedServers), [selectedServers]);
 
   // drop logic moved to page to ensure cross-column dnd works reliably
 
@@ -60,32 +58,11 @@ export function McpCanvas({
         )}
       </div>
 
-      <div className="space-x-2">
-        <button
-          className="px-3 py-2 text-sm rounded-md border"
-          onClick={() => navigator.clipboard.writeText(JSON.stringify(combined, null, 2))}
-        >
-          Copy combined MCP JSON
-        </button>
-        <button
-          className="px-3 py-2 text-sm rounded-md border"
-          onClick={() => {
-            const blob = new Blob([JSON.stringify(combined, null, 2)], { type: "application/json" });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "combined-mcp.json";
-            a.click();
-            URL.revokeObjectURL(url);
-          }}
-        >
-          Download JSON
-        </button>
-      </div>
+      {/* Bottom JSON action buttons removed as requested */}
     </div>
   );
 }
 
-export { onDragEnd };
+// onDragEnd export removed; logic handled on page
 
 
