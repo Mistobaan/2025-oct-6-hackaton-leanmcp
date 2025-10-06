@@ -56,3 +56,18 @@ class ExternalClientManager:
     async def close_all(self) -> None:
         await asyncio.gather(*(session.close() for session in self._sessions.values()), return_exceptions=True)
         self._sessions.clear()
+
+    async def list_tools(self, server_id: str) -> List[Dict[str, Any]]:
+        """Return the list of tools exposed by an external MCP server, if supported.
+
+        Falls back to an empty list if the server/client does not support tool listing.
+        """
+        session = await self._connect(server_id)
+        # Some implementations may expose `list_tools` or `get_tools`; try common options.
+        if hasattr(session, "list_tools"):
+            # type: ignore[attr-defined]
+            return await session.list_tools()  # type: ignore[attr-defined]
+        if hasattr(session, "get_tools"):
+            # type: ignore[attr-defined]
+            return await session.get_tools()  # type: ignore[attr-defined]
+        return []

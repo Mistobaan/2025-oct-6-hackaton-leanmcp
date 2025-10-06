@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from typing import Any, Dict
 
 from fastmcp import FastMCP
@@ -41,9 +42,84 @@ async def list_external_servers() -> list[str]:
     return clients.list_servers()
 
 
+@mcp.tool()
+async def list_external_tools(server_id: str) -> Any:
+    """List tools from a specific external MCP server, if supported."""
+    return await clients.list_tools(server_id)
+
+
+class ChainStep(BaseModel):
+    server_id: str
+    tool: str
+    arguments: Dict[str, Any] = {}
+
+
+class ChainArgs(BaseModel):
+    steps: list[ChainStep]
+
+
+def _resolve_placeholder(value: Any, prev_result: Any) -> Any:
+    """Resolve simple placeholders in strings.
+
+    Supported forms:
+    - "{{prev}}" → previous step's raw result
+    - "{{prev.path}}" → JSONPath-like simple dot access into dict/list
+    """
+    if not isinstance(value, str):
+        return value
+    if value == "{{prev}}":
+        return prev_result
+    if value.startswith("{{prev.") and value.endswith("}}"):
+        path = value[len("{{prev.") : -2].strip()
+        target = prev_result
+        for part in path.split("."):
+            if isinstance(target, dict):
+                target = target.get(part)
+            elif isinstance(target, list):
+                try:
+                    idx = int(part)
+                except ValueError:
+                    return None
+                target = target[idx] if 0 <= idx < len(target) else None
+            else:
+                return None
+        return target
+    return value
+
+
+def _substitute_arguments(arguments: Dict[str, Any], prev_result: Any) -> Dict[str, Any]:
+    def walk(node: Any) -> Any:
+        if isinstance(node, dict):
+            return {k: walk(v) for k, v in node.items()}
+        if isinstance(node, list):
+            return [walk(v) for v in node]
+        return _resolve_placeholder(node, prev_result)
+
+    return walk(arguments)
+
+
+@mcp.tool()
+async def chain_tools(args: ChainArgs) -> list[Any]:
+    """Execute a sequence of external MCP tools, passing previous results via placeholders.
+
+    Use "{{prev}}" or "{{prev.path}}" in step arguments to reference outputs of the prior step.
+    Returns the list of each step's result in order.
+    """
+    results: list[Any] = []
+    prev: Any = None
+    for idx, step in enumerate(args.steps):
+        step_args = _substitute_arguments(step.arguments, prev)
+        result = await clients.call_tool(step.server_id, step.tool, step_args)
+        results.append(result)
+        prev = result
+    return results
+
+
 if __name__ == "__main__":
     try:
-        mcp.run()
+        host = "0.0.0.0"
+        port = int(os.getenv("PORT", "8000"))
+        mcp.run(host=host, port=port)
     finally:
         # ensure we cleanup any sessions on shutdown
         asyncio.run(clients.close_all())
