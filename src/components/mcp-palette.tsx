@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { type McpServer } from "@/lib/mcps";
@@ -21,11 +22,22 @@ function PaletteItem({ server }: { server: McpServer }) {
       }
     >
       <div className="flex items-start gap-3">
-        {/* Icon placeholder; user will provide images later */}
-        <div className="h-8 w-8 rounded-md bg-muted shrink-0" />
+        {server.iconUrl ? (
+          <Image
+            src={server.iconUrl}
+            alt={`${server.name} icon`}
+            width={32}
+            height={32}
+            className="h-8 w-8 rounded-md border border-border bg-background object-contain p-1"
+          />
+        ) : (
+          <div className="h-8 w-8 rounded-md bg-muted shrink-0" />
+        )}
         <div>
           <div className="font-medium text-sm">{server.name}</div>
-          <div className="text-xs text-muted-foreground">{server.description}</div>
+          <div className="text-xs text-muted-foreground">
+            {server.description}
+          </div>
         </div>
       </div>
     </div>
@@ -52,6 +64,7 @@ export function McpPalette() {
               repository?: { url: string; source: string };
               version?: string;
               remotes?: Array<{ type: string; url: string }>;
+              icon?: string;
             };
           }>;
         } = await res.json();
@@ -60,22 +73,30 @@ export function McpPalette() {
           id: item.id,
           name: item.server.name,
           description: item.server.description,
-          iconUrl: undefined,
-          remoteUrl: item.server.remotes && item.server.remotes.length > 0 ? item.server.remotes[0].url : undefined,
+          iconUrl: item.server.icon,
+          remoteUrl:
+            item.server.remotes && item.server.remotes.length > 0
+              ? item.server.remotes[0].url
+              : undefined,
           repositoryUrl: item.server.repository?.url,
           config: {
             server: {
-              $schema: item.server.$schema ?? "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+              $schema:
+                item.server.$schema ??
+                "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
               name: item.server.name,
               description: item.server.description,
-              remotes: (item.server.remotes ?? []).map((r) => ({ type: r.type, url: r.url })),
+              remotes: (item.server.remotes ?? []).map((r) => ({
+                type: r.type,
+                url: r.url,
+              })),
             },
           },
         }));
 
         if (isMounted) setServers(mapped);
-      } catch (e: any) {
-        if (isMounted) setError(e?.message ?? "Failed to load servers");
+      } catch {
+        if (isMounted) setError("Failed to load servers");
       }
     }
     load();
@@ -88,9 +109,7 @@ export function McpPalette() {
 
   return (
     <div className="space-y-3">
-      {error && (
-        <div className="text-xs text-destructive">{error}</div>
-      )}
+      {error && <div className="text-xs text-destructive">{error}</div>}
       {servers === null && !error && (
         <div className="text-xs text-muted-foreground">Loading servers…</div>
       )}
@@ -100,5 +119,3 @@ export function McpPalette() {
     </div>
   );
 }
-
-
