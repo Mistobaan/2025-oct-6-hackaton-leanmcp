@@ -1,11 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function Home() {
   const router = useRouter();
   const [prompt, setPrompt] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const examplePrompt =
+    "Design a chatbot interface that delegates tasks to three MCP servers: GitHub, Linear, and Slack. Outline the tool calls needed.";
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,6 +37,7 @@ export default function Home() {
             <div className="flex items-end gap-3">
               <div className="flex-1">
                 <textarea
+                  ref={textareaRef}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   placeholder="Your wish is my command"
@@ -50,10 +54,29 @@ export default function Home() {
             </div>
             <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
               <div className="flex items-center gap-2">
-                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/10">+</span>
-                <span className="inline-flex h-7 items-center rounded-full border border-white/10 px-3 bg-white/5">Options</span>
+                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/10">
+                  +
+                </span>
+                <span className="inline-flex h-7 items-center rounded-full border border-white/10 px-3 bg-white/5">
+                  Options
+                </span>
               </div>
               <div className="opacity-80">Voice</div>
+            </div>
+          </div>
+          <div className="mt-4 text-xs md:text-lg text-muted-foreground">
+            Need inspiration?{" "}
+            <div>
+              <button
+                type="button"
+                onClick={() => {
+                  setPrompt(examplePrompt);
+                  textareaRef.current?.focus();
+                }}
+                className="cursor-pointer rounded-full border border-white/20 bg-white/10 px-3 py-1 text-foreground transition hover:bg-white/20"
+              >
+                {examplePrompt}
+              </button>
             </div>
           </div>
         </form>
