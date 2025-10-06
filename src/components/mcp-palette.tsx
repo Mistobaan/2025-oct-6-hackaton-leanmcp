@@ -5,19 +5,24 @@ import { useDraggable } from "@dnd-kit/core";
 import { type McpServer } from "@/lib/mcps";
 
 function PaletteItem({ server }: { server: McpServer }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+  const { attributes, listeners, setNodeRef, isDragging, transform } = useDraggable({
     id: server.id,
     data: { type: "palette", serverId: server.id },
   });
 
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+  } : undefined;
+
   return (
     <div
       ref={setNodeRef}
+      style={style}
       {...listeners}
       {...attributes}
       className={
-        "border rounded-md p-3 bg-card hover:bg-secondary cursor-grab active:cursor-grabbing select-none " +
-        (isDragging ? "opacity-50" : "")
+        "border rounded-md p-3 bg-card hover:bg-secondary cursor-grab active:cursor-grabbing select-none transition-colors " +
+        (isDragging ? "opacity-30 scale-95" : "hover:scale-[1.02]")
       }
     >
       <div className="flex items-start gap-3">

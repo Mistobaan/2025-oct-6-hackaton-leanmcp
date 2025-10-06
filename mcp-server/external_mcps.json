@@ -3,5 +3,10 @@
     "id": "gdrive-mcp",
     "transport": "sse",
     "url": "https://server.smithery.ai/@KaranThink41/official-gdrive-mcp/mcp?api_key=cb699b75-5c1f-4647-b3db-d98e1afd1d1f&profile=substantial-cheetah-1cYPLT"
+  },
+  {
+    "id": "gmail-mcp",
+    "transport": "sse",
+    "url": "https://server.smithery.ai/@shinzo-labs/gmail-mcp/mcp"
   }
 ]

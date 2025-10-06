@@ -43,7 +43,7 @@ except Exception:
     sys.exit(1)
 PY
 
-# Default command runs the FastMCP server; Fly sets PORT automatically
+# Default command runs the FastMCP server directly with Python
 CMD ["python", "server.py"]
 
 

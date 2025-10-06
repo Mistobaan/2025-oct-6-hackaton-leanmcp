@@ -1,23 +1,86 @@
 "use client";
 
-import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { DndContext, PointerSensor, KeyboardSensor, useSensor, useSensors, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { McpPalette } from "@/components/mcp-palette";
 import { McpCanvas } from "@/components/mcp-canvas";
 import { useLocalStorage } from "@/hooks/use-local-storage";
+import { useState, useEffect } from "react";
+import { type McpServer } from "@/lib/mcps";
 
 export default function BlackboxPage() {
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor)
   );
 
   const [selected, setSelected] = useLocalStorage<string[]>("selected-mcps", []);
+  const [activeServer, setActiveServer] = useState<McpServer | null>(null);
+  const [allServers, setAllServers] = useState<McpServer[]>([]);
+
+  useEffect(() => {
+    async function loadServers() {
+      try {
+        const res = await fetch("/api/servers", { method: "POST" });
+        if (!res.ok) throw new Error(`Failed to load servers: ${res.status}`);
+        const data: {
+          items: Array<{
+            id: string;
+            server: {
+              name: string;
+              description: string;
+              $schema?: string;
+              repository?: { url: string; source: string };
+              version?: string;
+              remotes?: Array<{ type: string; url: string }>;
+            };
+          }>;
+        } = await res.json();
+
+        const mapped: McpServer[] = data.items.map((item) => ({
+          id: item.id,
+          name: item.server.name,
+          description: item.server.description,
+          iconUrl: undefined,
+          remoteUrl: item.server.remotes && item.server.remotes.length > 0 ? item.server.remotes[0].url : undefined,
+          repositoryUrl: item.server.repository?.url,
+          config: {
+            server: {
+              $schema: item.server.$schema ?? "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+              name: item.server.name,
+              description: item.server.description,
+              remotes: (item.server.remotes ?? []).map((r) => ({ type: r.type, url: r.url })),
+            },
+          },
+        }));
+
+        setAllServers(mapped);
+      } catch (e: any) {
+        console.error("Failed to load servers for drag overlay:", e);
+      }
+    }
+    loadServers();
+  }, []);
+
+  function handleDragStart(event: DragStartEvent) {
+    const { active } = event;
+    const data: any = (active as any).data?.current;
+    if (data?.type === "palette" && typeof data.serverId === "string") {
+      // Find the server data for the drag overlay
+      const server = allServers.find(s => s.id === data.serverId);
+      if (server) {
+        setActiveServer(server);
+      }
+    }
+  }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
+    setActiveServer(null);
+    
     if (!over || over.id !== "canvas") return;
+    
     const data: any = (active as any).data?.current;
     if (data?.type === "palette" && typeof data.serverId === "string") {
       if (!selected.includes(data.serverId)) {
@@ -27,7 +90,11 @@ export default function BlackboxPage() {
   }
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext 
+      sensors={sensors} 
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <div className="min-h-screen bg-background relative text-foreground">
         {/* grain + orb to match landing */}
         <div className="pointer-events-none absolute inset-0 -z-10 opacity-[0.35] [background-image:radial-gradient(transparent_1px,rgba(0,0,0,0.15)_1px)] [background-size:3px_3px]" />
@@ -64,6 +131,20 @@ export default function BlackboxPage() {
           </div>
         </main>
       </div>
+      
+      <DragOverlay>
+        {activeServer ? (
+          <div className="border rounded-md p-3 bg-card shadow-lg opacity-90 rotate-3">
+            <div className="flex items-start gap-3">
+              <div className="h-8 w-8 rounded-md bg-muted shrink-0" />
+              <div>
+                <div className="font-medium text-sm">{activeServer.name}</div>
+                <div className="text-xs text-muted-foreground">{activeServer.description}</div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }

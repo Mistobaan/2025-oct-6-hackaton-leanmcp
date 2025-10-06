@@ -48,6 +48,29 @@ async def list_external_tools(server_id: str) -> Any:
     return await clients.list_tools(server_id)
 
 
+@mcp.tool()
+async def authenticate_gmail() -> str:
+    """Start Gmail OAuth authentication process.
+    
+    Returns instructions for completing the authentication flow.
+    """
+    try:
+        # Start the OAuth flow using the authenticate tool
+        result = await clients.call_tool("gmail-mcp", "authenticate", {})
+        return f"Gmail authentication started. Follow the instructions: {result}"
+    except Exception as e:
+        return f"Failed to start Gmail authentication: {str(e)}"
+
+
+@mcp.tool()
+async def check_gmail_auth() -> Any:
+    """Check Gmail authentication status."""
+    try:
+        return await clients.call_tool("gmail-mcp", "check_auth_status", {})
+    except Exception as e:
+        return f"Failed to check Gmail auth status: {str(e)}"
+
+
 class ChainStep(BaseModel):
     server_id: str
     tool: str
@@ -117,9 +140,19 @@ async def chain_tools(args: ChainArgs) -> list[Any]:
 
 if __name__ == "__main__":
     try:
+        # FastMCP runs directly with Python
+        # Run with: python server.py
+        # Check if FastMCP supports host/port parameters
         host = "0.0.0.0"
         port = int(os.getenv("PORT", "8000"))
-        mcp.run(host=host, port=port)
+        
+        # Try to run with host/port if supported
+        try:
+            mcp.run(host=host, port=port)
+        except TypeError:
+            # If host/port not supported, run with defaults
+            print(f"Starting FastMCP server on default host/port (PORT env var: {port})")
+            mcp.run()
     finally:
         # ensure we cleanup any sessions on shutdown
         asyncio.run(clients.close_all())
